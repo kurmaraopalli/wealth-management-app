@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - master
 
 jobs:
   build:
@@ -20,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd web
-          npm ci   # safer for CI than npm install
+          npm install
 
       - name: Build web app
         run: |
@@ -28,17 +27,15 @@ jobs:
           npm run build
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v1   # ✅ updated to latest
+        uses: actions/upload-pages-artifact@v3   # ✅ updated version
         with:
-          path: web/dist
+          path: web/dist   # or web/build depending on vite.config.ts
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4   # ✅ updated to latest
+        uses: actions/deploy-pages@v4   # ✅ updated version
