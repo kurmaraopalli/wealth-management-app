@@ -28,7 +28,7 @@ jobs:
           npm run build
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v2   # ✅ updated to latest
+        uses: actions/upload-pages-artifact@v1   # ✅ updated to latest
         with:
           path: web/dist
 
