@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -14,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: |
@@ -27,9 +32,9 @@ jobs:
           npm run build
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3   # ✅ updated version
+        uses: actions/upload-pages-artifact@v3
         with:
-          path: web/dist   # or web/build depending on vite.config.ts
+          path: web/dist   # or web/build if vite.config.ts sets outDir
 
   deploy:
     needs: build
@@ -38,4 +43,4 @@ jobs:
       name: github-pages
     steps:
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4   # ✅ updated version
+        uses: actions/deploy-pages@v4
