@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd web
-          npm ci   # safer than npm install for CI
+          npm ci   # safer for CI than npm install
 
       - name: Build web app
         run: |
@@ -28,7 +28,7 @@ jobs:
           npm run build
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v2   # ✅ update to latest version
+        uses: actions/upload-pages-artifact@v2   # ✅ updated to latest
         with:
           path: web/dist
 
@@ -41,4 +41,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4   # ✅ update to latest version
+        uses: actions/deploy-pages@v4   # ✅ updated to latest
