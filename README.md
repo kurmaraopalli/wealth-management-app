@@ -12,15 +12,56 @@ Both apps include:
 - Debt Funds
 - Foreign Portfolio
 
+## Dynamic Data Integration
+
+The web application now features **dynamic market data** with automatic daily updates:
+
+### Features
+- **24-hour caching**: Data is cached locally and refreshed automatically once per day
+- **Manual refresh**: Users can force refresh data using the 🔄 button on any page
+- **Fallback to mock data**: If API calls fail, the app gracefully falls back to mock data
+- **Last updated timestamp**: Shows when data was last fetched
+
+### Data Sources
+Currently using mock data as placeholders. To integrate real market data:
+
+1. **Stock Data**: Update `fetchStocksFromAPI()` in `web/src/services/marketData.ts`
+   - Recommended APIs: Alpha Vantage, Yahoo Finance, IEX Cloud
+2. **Ticker Data**: Update `fetchTickersFromAPI()` in `web/src/services/marketData.ts`
+   - Recommended APIs: Financial market data providers
+3. **Mutual Funds**: Update `fetchMutualFundsFromAPI()` in `web/src/services/marketData.ts`
+   - Recommended APIs: Morningstar, CRISIL (India), mutual fund providers
+4. **Debt Funds**: Update `fetchDebtFundsFromAPI()` in `web/src/services/marketData.ts`
+   - Recommended APIs: Debt fund data providers, bond market APIs
+
+### API Integration Example
+
+```typescript
+// In web/src/services/marketData.ts
+async function fetchStocksFromAPI(): Promise<StockData[]> {
+  // Example with Alpha Vantage
+  const response = await fetch('https://www.alphavantage.co/query?function=GLOBAL_QUOTE...');
+  const data = await response.json();
+  // Transform API response to StockData format
+  return transformedData;
+}
+```
+
+### Cache Management
+- Cache duration: 24 hours
+- Storage: Browser localStorage
+- Cache keys: `wealth_stocks_cache`, `wealth_tickers_cache`, `wealth_mutual_funds_cache`, `wealth_debt_funds_cache`
+- Clear cache: Use `forceRefreshAll()` or clear browser localStorage
+
 ## Run the Web App
 
-1. Open `c:\Khavish_Workspace\Wealth management app\web`
+1. Open `c:\Users\kurma\OneDrive\Documents\Workspace\wealth-management-app\web`
 2. Install dependencies: `npm install`
 3. Start the app: `npm run dev`
 
 ## Run the Mobile App
 
-1. Open `c:\Khavish_Workspace\Wealth management app\mobile`
+1. Open `c:\Users\kurma\OneDrive\Documents\Workspace\wealth-management-app\mobile`
 2. Install dependencies: `npm install`
 3. Start Expo: `npm start`
 

@@ -1,29 +1,68 @@
+import { useState, useEffect } from 'react';
+import { getMutualFundData, getLastUpdateTime, forceRefreshAll } from '../services/marketData';
+import type { MutualFundData } from '../services/marketData';
+
 export default function MutualFunds() {
-  const funds = [
-    { name: 'ABC Large Cap Fund', category: 'Large Cap', ytd: '12.2%' },
-    { name: 'PQR Mid Cap Fund', category: 'Mid Cap', ytd: '15.1%' },
-    { name: 'XYZ Flexi Cap Fund', category: 'Flexi Cap', ytd: '14.3%' },
-    { name: 'Global Equity Fund', category: 'International', ytd: '11.8%' },
-    { name: 'Debt Hybrid Fund', category: 'Hybrid', ytd: '9.6%' },
-    { name: 'Small Cap Advantage', category: 'Small Cap', ytd: '18.4%' },
-    { name: 'ELSS Tax Saver', category: 'ELSS', ytd: '10.9%' },
-    { name: 'Value Fund Strategy', category: 'Value', ytd: '13.7%' },
-    { name: 'Dividend Yield Fund', category: 'Dividend', ytd: '8.5%' },
-    { name: 'Balanced Advantage Fund', category: 'Balanced', ytd: '10.1%' },
-  ];
+  const [funds, setFunds] = useState<MutualFundData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    loadFundData();
+  }, []);
+
+  const loadFundData = async () => {
+    setLoading(true);
+    const data = await getMutualFundData();
+    setFunds(data);
+    setLastUpdate(getLastUpdateTime());
+    setLoading(false);
+  };
+
+  const handleRefresh = async () => {
+    await forceRefreshAll();
+    loadFundData();
+  };
 
   return (
     <section>
-      <h1>Mutual Funds</h1>
-      <p>Review your mutual fund schemes and asset allocation across categories.</p>
-      <ul className="fund-list">
-        {funds.map((fund) => (
-          <li key={fund.name}>
-            <strong>{fund.name}</strong>
-            <span>{fund.category}, {fund.ytd} YTD</span>
-          </li>
-        ))}
-      </ul>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h1>Mutual Funds</h1>
+          <p>Review your mutual fund schemes and asset allocation across categories.</p>
+        </div>
+        <button 
+          onClick={handleRefresh}
+          style={{
+            padding: '8px 16px',
+            background: '#5e72ff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '0.9rem'
+          }}
+        >
+          🔄 Refresh
+        </button>
+      </div>
+      {lastUpdate && (
+        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px' }}>
+          Last updated: {lastUpdate.toLocaleString()}
+        </p>
+      )}
+      {loading ? (
+        <div style={{ padding: '40px', textAlign: 'center' }}>Loading mutual fund data...</div>
+      ) : (
+        <ul className="fund-list">
+          {funds.map((fund) => (
+            <li key={fund.name}>
+              <strong>{fund.name}</strong>
+              <span>{fund.category}, {fund.ytd} YTD</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
