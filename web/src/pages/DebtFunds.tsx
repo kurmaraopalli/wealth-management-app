@@ -25,40 +25,41 @@ export default function DebtFunds() {
   };
 
   return (
-    <section>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <section className="fade-up">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <h1>Debt Funds</h1>
-          <p>Track fixed income and debt fund portfolios with risk and return measures.</p>
+          <h1>Fixed Income & Debt Funds</h1>
+          <p className="section-desc" style={{ marginBottom: 0 }}>
+            Analyze fixed-income investments, AAA corporate bonds, and PSU debt funds with average yield metrics.
+          </p>
         </div>
         <button 
           onClick={handleRefresh}
-          style={{
-            padding: '8px 16px',
-            background: '#5e72ff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
+          className="btn btn-primary"
         >
-          🔄 Refresh
+          🔄 Refresh Data
         </button>
       </div>
+
       {lastUpdate && (
-        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px' }}>
-          Last updated: {lastUpdate.toLocaleString()}
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Last data update: {lastUpdate.toLocaleString()}
         </p>
       )}
+
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center' }}>Loading debt fund data...</div>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading debt fund holdings...</div>
       ) : (
         <ul className="fund-list">
           {funds.map((fund) => (
             <li key={fund.name}>
               <strong>{fund.name}</strong>
-              <span>{fund.type}, {fund.yield} yield</span>
+              <span>
+                <span className="badge" style={{ backgroundColor: 'var(--warning-light)', color: 'var(--warning-dark)', textTransform: 'none' }}>
+                  {fund.type}
+                </span>
+                <strong className="trend-positive">{fund.yield} Yield</strong>
+              </span>
             </li>
           ))}
         </ul>
@@ -66,3 +67,4 @@ export default function DebtFunds() {
     </section>
   );
 }
+

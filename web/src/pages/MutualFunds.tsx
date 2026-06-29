@@ -25,40 +25,41 @@ export default function MutualFunds() {
   };
 
   return (
-    <section>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <section className="fade-up">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
           <h1>Mutual Funds</h1>
-          <p>Review your mutual fund schemes and asset allocation across categories.</p>
+          <p className="section-desc" style={{ marginBottom: 0 }}>
+            Monitor equity, hybrid, and small-cap mutual fund schemes, allocations, and year-to-date returns.
+          </p>
         </div>
         <button 
           onClick={handleRefresh}
-          style={{
-            padding: '8px 16px',
-            background: '#5e72ff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
+          className="btn btn-primary"
         >
-          🔄 Refresh
+          🔄 Refresh Data
         </button>
       </div>
+
       {lastUpdate && (
-        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px' }}>
-          Last updated: {lastUpdate.toLocaleString()}
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Last data update: {lastUpdate.toLocaleString()}
         </p>
       )}
+
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center' }}>Loading mutual fund data...</div>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading mutual fund holdings...</div>
       ) : (
         <ul className="fund-list">
           {funds.map((fund) => (
             <li key={fund.name}>
               <strong>{fund.name}</strong>
-              <span>{fund.category}, {fund.ytd} YTD</span>
+              <span>
+                <span className="badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', textTransform: 'none' }}>
+                  {fund.category}
+                </span>
+                <strong className="trend-positive">{fund.ytd} YTD</strong>
+              </span>
             </li>
           ))}
         </ul>
@@ -66,3 +67,4 @@ export default function MutualFunds() {
     </section>
   );
 }
+

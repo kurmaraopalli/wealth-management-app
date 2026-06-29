@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   getTickerData, 
   getLastUpdateTime, 
@@ -39,6 +40,14 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  // Filters state
+  const [swingSearch, setSwingSearch] = useState('');
+  const [signalFilter, setSignalFilter] = useState('All');
+  const [performerSearch, setPerformerSearch] = useState('');
+
+  // SVG Chart interaction
+  const [hoveredAsset, setHoveredAsset] = useState<string | null>(null);
+
   useEffect(() => {
     loadAllData();
 
@@ -77,61 +86,198 @@ export default function Home() {
     loadAllData();
   };
 
+  // Filter Logic
+  const filteredSwing = swingStocks.filter(stock => {
+    const matchesSearch = stock.symbol.toLowerCase().includes(swingSearch.toLowerCase()) ||
+                          stock.name.toLowerCase().includes(swingSearch.toLowerCase());
+    const matchesSignal = signalFilter === 'All' || stock.signal === signalFilter;
+    return matchesSearch && matchesSignal;
+  });
+
+  const filteredPerformers = monthlyPerformers.filter(stock => {
+    return stock.symbol.toLowerCase().includes(performerSearch.toLowerCase()) ||
+           stock.name.toLowerCase().includes(performerSearch.toLowerCase());
+  });
+
+  // Portfolio details for interactive SVG chart
+  const portfolioAssets = [
+    { label: 'Equities', percent: 45, value: '₹21,71,250', color: '#2563eb' },
+    { label: 'Mutual Funds', percent: 30, value: '₹14,47,500', color: '#10b981' },
+    { label: 'Debt Funds', percent: 15, value: '₹7,23,750', color: '#f59e0b' },
+    { label: 'International', percent: 10, value: '₹4,82,500', color: '#8b5cf6' }
+  ];
+
   return (
     <section>
       <div className="hero-panel">
-        <div className="hero-copy">
-          <span className="eyebrow">Invest with confidence</span>
-          <h1>Welcome to Wealth Manager</h1>
+        <div className="hero-copy fade-up">
+          <span className="eyebrow">🏛️ Wealth Management Hub</span>
+          <h1>Smart wealth building, made simple.</h1>
           <p>
-            Track your portfolio across equities, mutual funds, debt funds, and foreign assets. Enjoy modern charts,
-            animated market signals, and an intuitive dashboard built for every investor.
+            Track holdings, analyze asset performance, and review technical signals across Indian equities, 
+            mutual funds, fixed-income debt, and currency-diversified international assets—all in one secure platform.
           </p>
+          <div className="hero-actions">
+            <Link to="/equities" className="btn btn-primary">
+              💼 Manage Portfolio
+            </Link>
+            <Link to="/global-indexes" className="btn btn-outline">
+              📈 Explore Markets
+            </Link>
+          </div>
           {lastUpdate && (
-            <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px' }}>
-              Last updated: {lastUpdate.toLocaleString()}
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+              Last data update: {lastUpdate.toLocaleString()}
             </p>
           )}
         </div>
-        <div className="hero-visual">
-          <div className="ticker-card">
-            <div className="ticker-header">
-              <span>Global Market Pulse</span>
-              <span className="ticker-badge">Live</span>
-              <button 
-                onClick={handleRefresh}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  color: '#5e72ff',
-                  marginLeft: '8px'
-                }}
-                title="Refresh data"
-              >
-                🔄
-              </button>
+
+        <div className="hero-visual fade-up delay-1">
+          {/* Interactive Portfolio Overview Card */}
+          <div className="portfolio-card">
+            <div className="portfolio-info">
+              <h3>Portfolio Value</h3>
+              <div className="portfolio-balance">₹48,25,000</div>
+              <div className="portfolio-performance">
+                ▲ +14.2% YTD
+              </div>
+              <div className="portfolio-legend" style={{ marginTop: '16px' }}>
+                {portfolioAssets.map((asset) => (
+                  <div 
+                    key={asset.label} 
+                    className="legend-item"
+                    onMouseEnter={() => setHoveredAsset(asset.label)}
+                    onMouseLeave={() => setHoveredAsset(null)}
+                    style={{ 
+                      opacity: hoveredAsset && hoveredAsset !== asset.label ? 0.5 : 1,
+                      transition: 'opacity 0.2s',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div className="legend-label-group">
+                      <span className="legend-dot" style={{ backgroundColor: asset.color }} />
+                      <span>{asset.label}</span>
+                    </div>
+                    <span className="legend-percent">{asset.value} ({asset.percent}%)</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            {loading ? (
-              <div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>
-            ) : (
-              tickers.map((ticker, idx) => (
-                <div key={idx} className={`ticker-row ${ticker.isPositive ? 'positive' : 'negative'}`}>
-                  <span>{ticker.index}</span>
-                  <span>{ticker.change}</span>
+
+            {/* Donut Chart SVG */}
+            <div className="chart-wrapper">
+              <svg viewBox="0 0 120 120" width="100%" height="100%">
+                {/* Circumference = 2 * PI * r = 2 * 3.14159 * 40 = 251.32 */}
+                
+                {/* Equities segment (45%): size 113.1, offset 0 */}
+                <circle
+                  className="svg-donut-segment"
+                  cx="60" cy="60" r="40"
+                  fill="transparent"
+                  stroke="#2563eb"
+                  strokeWidth="10"
+                  strokeDasharray="113.1 251.3"
+                  strokeDashoffset="0"
+                  onMouseEnter={() => setHoveredAsset('Equities')}
+                  onMouseLeave={() => setHoveredAsset(null)}
+                  style={{ strokeWidth: hoveredAsset === 'Equities' ? 14 : 10 }}
+                />
+                
+                {/* Mutual Funds segment (30%): size 75.4, offset -113.1 */}
+                <circle
+                  className="svg-donut-segment"
+                  cx="60" cy="60" r="40"
+                  fill="transparent"
+                  stroke="#10b981"
+                  strokeWidth="10"
+                  strokeDasharray="75.4 251.3"
+                  strokeDashoffset="-113.1"
+                  onMouseEnter={() => setHoveredAsset('Mutual Funds')}
+                  onMouseLeave={() => setHoveredAsset(null)}
+                  style={{ strokeWidth: hoveredAsset === 'Mutual Funds' ? 14 : 10 }}
+                />
+
+                {/* Debt Funds segment (15%): size 37.7, offset -188.5 */}
+                <circle
+                  className="svg-donut-segment"
+                  cx="60" cy="60" r="40"
+                  fill="transparent"
+                  stroke="#f59e0b"
+                  strokeWidth="10"
+                  strokeDasharray="37.7 251.3"
+                  strokeDashoffset="-188.5"
+                  onMouseEnter={() => setHoveredAsset('Debt Funds')}
+                  onMouseLeave={() => setHoveredAsset(null)}
+                  style={{ strokeWidth: hoveredAsset === 'Debt Funds' ? 14 : 10 }}
+                />
+
+                {/* International segment (10%): size 25.1, offset -226.2 */}
+                <circle
+                  className="svg-donut-segment"
+                  cx="60" cy="60" r="40"
+                  fill="transparent"
+                  stroke="#8b5cf6"
+                  strokeWidth="10"
+                  strokeDasharray="25.1 251.3"
+                  strokeDashoffset="-226.2"
+                  onMouseEnter={() => setHoveredAsset('International')}
+                  onMouseLeave={() => setHoveredAsset(null)}
+                  style={{ strokeWidth: hoveredAsset === 'International' ? 14 : 10 }}
+                />
+              </svg>
+              <div className="chart-center-text" style={{ color: 'white' }}>
+                <div className="chart-center-val">
+                  {hoveredAsset ? 
+                    portfolioAssets.find(a => a.label === hoveredAsset)?.percent + '%' 
+                    : '100%'}
                 </div>
-              ))
-            )}
+                <div className="chart-center-lbl" style={{ color: '#94a3b8' }}>
+                  {hoveredAsset ? hoveredAsset.split(' ')[0] : 'Assets'}
+                </div>
+              </div>
+            </div>
           </div>
+
           <div className="logo-cloud">
-            <div className="logo-chip logo-apple">🍎</div>
-            <div className="logo-chip logo-google">🔎</div>
-            <div className="logo-chip logo-tesla">⚡</div>
-            <div className="logo-chip logo-microsoft">🪟</div>
-            <div className="logo-chip logo-btc">💹</div>
+            <div className="logo-chip" title="Apple Inc.">🍎</div>
+            <div className="logo-chip" title="Google Inc.">🔎</div>
+            <div className="logo-chip" title="Tesla Inc.">⚡</div>
+            <div className="logo-chip" title="Microsoft Corp.">🪟</div>
+            <div className="logo-chip" title="Bitcoin">💹</div>
           </div>
         </div>
+      </div>
+
+      {/* Global Market Pulse & Refresh Banner */}
+      <div className="ticker-card fade-up delay-2" style={{ marginBottom: '32px' }}>
+        <div className="ticker-header">
+          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            🌐 Global Market Pulse
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span className="ticker-badge">Live Ticker</span>
+            <button 
+              onClick={handleRefresh}
+              className="btn btn-outline"
+              style={{ padding: '6px 10px', fontSize: '0.8rem', borderRadius: '6px' }}
+              title="Force update daily data cache"
+            >
+              🔄 Refresh Cache
+            </button>
+          </div>
+        </div>
+        {loading ? (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Updating market tickers...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+            {tickers.map((ticker, idx) => (
+              <div key={idx} className={`ticker-row ${ticker.isPositive ? 'positive' : 'negative'}`}>
+                <span>{ticker.index}</span>
+                <span>{ticker.change}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Swing Trading & Top Performers Dashboard */}
@@ -139,11 +285,38 @@ export default function Home() {
         {/* Swing Trading Panel */}
         <div className="dashboard-card fade-up delay-1">
           <h2>
-            <span>🏏</span> NSE Swing Trading Picks (Top 10)
+            <span>🏏</span> NSE Swing Trading Picks
           </h2>
           <p className="section-desc">
-            Top liquid Indian NSE stocks for short-term swing positions based on daily technical indicators, support, and resistance.
+            Top liquid Indian NSE stocks for short-term swing positions based on daily moving averages, RSI divergence, and candlestick formations.
           </p>
+          
+          {/* Controls - Search and Signal Filter */}
+          <div className="card-controls">
+            <div className="control-group">
+              <input 
+                type="text" 
+                placeholder="Search symbol/name..." 
+                className="search-input"
+                value={swingSearch}
+                onChange={(e) => setSwingSearch(e.target.value)}
+              />
+            </div>
+            <div className="control-group">
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Signal:</span>
+              <select 
+                className="filter-select"
+                value={signalFilter}
+                onChange={(e) => setSignalFilter(e.target.value)}
+              >
+                <option value="All">All Picks</option>
+                <option value="Strong Buy">Strong Buy</option>
+                <option value="Buy">Buy</option>
+                <option value="Hold">Hold</option>
+              </select>
+            </div>
+          </div>
+
           <div className="table-responsive">
             <table className="modern-table">
               <thead>
@@ -162,12 +335,18 @@ export default function Home() {
                   <tr>
                     <td colSpan={7} style={{ textAlign: 'center', padding: '30px' }}>Loading swing trade data...</td>
                   </tr>
+                ) : filteredSwing.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                      No picks match your filter/search criteria.
+                    </td>
+                  </tr>
                 ) : (
-                  swingStocks.map((stock) => (
+                  filteredSwing.map((stock) => (
                     <tr key={stock.symbol}>
                       <td>
                         <strong>{stock.symbol}</strong>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{stock.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stock.name}</div>
                       </td>
                       <td>{stock.price}</td>
                       <td>{stock.support}</td>
@@ -196,11 +375,25 @@ export default function Home() {
         {/* Top Performers Panel */}
         <div className="dashboard-card fade-up delay-2">
           <h2>
-            <span>🔥</span> Top Performers (Last 1 Month)
+            <span>🔥</span> Top Performers (Last 30 Days)
           </h2>
           <p className="section-desc">
-            Indian market stock leaders with the highest cumulative percentage returns over the past 30 days.
+            Indian market stock leaders with the highest cumulative percentage gains over the past month.
           </p>
+
+          {/* Controls - Search */}
+          <div className="card-controls">
+            <div className="control-group">
+              <input 
+                type="text" 
+                placeholder="Search symbol/name..." 
+                className="search-input"
+                value={performerSearch}
+                onChange={(e) => setPerformerSearch(e.target.value)}
+              />
+            </div>
+          </div>
+
           <div className="table-responsive">
             <table className="modern-table">
               <thead>
@@ -216,12 +409,18 @@ export default function Home() {
                   <tr>
                     <td colSpan={4} style={{ textAlign: 'center', padding: '30px' }}>Loading top performers...</td>
                   </tr>
+                ) : filteredPerformers.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
+                      No stocks found matching search.
+                    </td>
+                  </tr>
                 ) : (
-                  monthlyPerformers.map((stock) => (
+                  filteredPerformers.map((stock) => (
                     <tr key={stock.symbol}>
                       <td>
                         <strong>{stock.symbol}</strong>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{stock.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{stock.name}</div>
                       </td>
                       <td>{stock.price}</td>
                       <td className="trend-positive">
@@ -239,28 +438,33 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Asset Explorer Cards */}
+      <h2 style={{ marginTop: '36px', marginBottom: '8px' }}>Explore Asset Class Allocations</h2>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>Analyze specific details, holdings, and risk factors for each investment category.</p>
+      
       <div className="card-grid home-card-grid">
-        <article className="card fade-up">
+        <Link to="/equities" className="card fade-up">
           <div className="card-icon">📈</div>
-          <h2>Equities</h2>
-          <p>View stock holdings and market performance for your equity portfolio.</p>
-        </article>
-        <article className="card fade-up delay-1">
+          <h2>Indian Equities</h2>
+          <p>Review direct equity holdings, quantities, valuations, and gains across stocks.</p>
+        </Link>
+        <Link to="/mutual-funds" className="card fade-up delay-1">
           <div className="card-icon">💼</div>
           <h2>Mutual Funds</h2>
-          <p>Monitor your mutual fund allocations, returns, and scheme details.</p>
-        </article>
-        <article className="card fade-up delay-2">
+          <p>Monitor systematic investment plans (SIPs), fund schemes, and index performance.</p>
+        </Link>
+        <Link to="/debt-funds" className="card fade-up delay-2">
           <div className="card-icon">🏛️</div>
-          <h2>Debt Funds</h2>
-          <p>Analyze fixed income holdings and debt fund performance.</p>
-        </article>
-        <article className="card fade-up delay-3">
+          <h2>Fixed Income & Debt</h2>
+          <p>Track dynamic and banking PSU bonds, yield averages, and secure debt investments.</p>
+        </Link>
+        <Link to="/foreign-portfolio" className="card fade-up delay-3">
           <div className="card-icon">🌍</div>
-          <h2>Foreign Portfolio</h2>
-          <p>See international investments and currency diversified holdings.</p>
-        </article>
+          <h2>International Assets</h2>
+          <p>See exposure to US technology equities, global bond issues, and currency diversification.</p>
+        </Link>
       </div>
     </section>
   );
 }
+

@@ -25,60 +25,65 @@ export default function Equities() {
   };
 
   return (
-    <section>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <section className="fade-up">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
         <div>
-          <h1>Equities</h1>
-          <p>Manage your equity holdings, watch top stocks, and review recent performance.</p>
+          <h1>Indian & US Equities</h1>
+          <p className="section-desc" style={{ marginBottom: 0 }}>
+            Manage direct stock holdings, review quantity holdings, valuations, and track cumulative returns.
+          </p>
         </div>
         <button 
           onClick={handleRefresh}
-          style={{
-            padding: '8px 16px',
-            background: '#5e72ff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
+          className="btn btn-primary"
         >
-          🔄 Refresh
+          🔄 Refresh Data
         </button>
       </div>
+
       {lastUpdate && (
-        <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '8px' }}>
-          Last updated: {lastUpdate.toLocaleString()}
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Last data update: {lastUpdate.toLocaleString()}
         </p>
       )}
+
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center' }}>Loading stock data...</div>
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading stock holdings...</div>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Name</th>
-              <th>Country</th>
-              <th>Quantity</th>
-              <th>Current Price</th>
-              <th>Gain / Loss</th>
-            </tr>
-          </thead>
-          <tbody>
-            {companies.map((company) => (
-              <tr key={company.symbol}>
-                <td>{company.symbol}</td>
-                <td>{company.name}</td>
-                <td>{company.country}</td>
-                <td>{company.quantity}</td>
-                <td>{company.price}</td>
-                <td>{company.gain}</td>
+        <div className="table-responsive">
+          <table className="modern-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Company Name</th>
+                <th>Market</th>
+                <th>Qty</th>
+                <th>Current Price</th>
+                <th>Gain / Loss</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {companies.map((company) => (
+                <tr key={company.symbol}>
+                  <td><strong>{company.symbol}</strong></td>
+                  <td>{company.name}</td>
+                  <td>
+                    <span className="badge" style={{ backgroundColor: 'var(--bg-app)', color: 'var(--text-secondary)' }}>
+                      {company.country}
+                    </span>
+                  </td>
+                  <td>{company.quantity}</td>
+                  <td>{company.price}</td>
+                  <td className={company.gain.startsWith('+') ? 'trend-positive' : 'trend-negative'}>
+                    {company.gain}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );
 }
+
