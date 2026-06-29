@@ -33,6 +33,7 @@ WealthFlow is styled with a highly curated, premium finance theme:
 ### 2. Interactive SVG Portfolio Dashboard
 - **Asset Allocation Donut Chart**: Rendered in pure SVG segments. Hovering over a segment dynamically isolates that asset class, updating the center value labels and adjusting segment widths on-hover.
 - **Summary Metrics**: Displays net worth, YTD yield average gains, and allocation distributions.
+- **Sandbox Metadata & Developer Insight**: Displays portfolio sandbox tags (`Account: Demo Portfolio`, `Data: Simulated Feed`) and includes developer insights highlighting that this growth portfolio is a simulated showcase built by Khavish to demonstrate responsive data binding.
 
 ### 3. Technical Market Signal Tiles
 - **NSE Swing Trading Picks**: Displays top Indian stocks for short-term swing positions.

@@ -135,7 +135,18 @@ export default function Home() {
         <div className="hero-visual fade-up delay-1">
           {/* Interactive Portfolio Overview Card */}
           <div className="portfolio-card">
-            <div className="portfolio-info">
+            <div className="portfolio-info" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#fff', fontSize: '0.725rem', textTransform: 'none', fontWeight: 600, padding: '4px 8px', borderRadius: '6px' }}>
+                  Account: Demo Portfolio
+                </span>
+                <span className="badge" style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)', color: '#fff', fontSize: '0.725rem', textTransform: 'none', fontWeight: 600, padding: '4px 8px', borderRadius: '6px' }}>
+                  Data: Simulated Feed
+                </span>
+                <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#10b981', fontSize: '0.725rem', textTransform: 'none', fontWeight: 700, padding: '4px 8px', borderRadius: '6px' }}>
+                  Risk Profile: Growth
+                </span>
+              </div>
               <h3>Portfolio Value</h3>
               <div className="portfolio-balance">₹48,25,000</div>
               <div className="portfolio-performance">
@@ -161,6 +172,9 @@ export default function Home() {
                     <span className="legend-percent">{asset.value} ({asset.percent}%)</span>
                   </div>
                 ))}
+              </div>
+              <div style={{ marginTop: '16px', padding: '10px 12px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.06)', fontSize: '0.75rem', lineHeight: '1.4', color: '#cbd5e1' }}>
+                💡 <strong>Developer Insight:</strong> This simulated growth portfolio showcases the responsive charting and data flows built by student developer Khavish. In production, this component connects to live brokerage or demat feed APIs.
               </div>
             </div>
 
