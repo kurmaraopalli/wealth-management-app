@@ -10,6 +10,25 @@ export interface StockData {
   gain: string;
 }
 
+export interface SwingTradeStock {
+  symbol: string;
+  name: string;
+  price: string;
+  support: string;
+  resistance: string;
+  change: string;
+  signal: 'Buy' | 'Strong Buy' | 'Hold';
+  rationale: string;
+}
+
+export interface MonthlyPerformer {
+  symbol: string;
+  name: string;
+  price: string;
+  gain1M: string;
+  sparkline: number[];
+}
+
 export interface TickerData {
   index: string;
   change: string;
@@ -34,6 +53,8 @@ const CACHE_KEYS = {
   TICKERS: 'wealth_tickers_cache',
   MUTUAL_FUNDS: 'wealth_mutual_funds_cache',
   DEBT_FUNDS: 'wealth_debt_funds_cache',
+  SWING_STOCKS: 'wealth_swing_stocks_cache',
+  MONTHLY_PERFORMERS: 'wealth_monthly_performers_cache',
   LAST_UPDATE: 'wealth_last_update'
 };
 
@@ -205,9 +226,16 @@ export function getLastUpdateTime(): Date | null {
   return new Date(parseInt(lastUpdate));
 }
 
-export function forceRefreshAll(): Promise<[StockData[], TickerData[], MutualFundData[], DebtFundData[]]> {
+export function forceRefreshAll(): Promise<[StockData[], TickerData[], MutualFundData[], DebtFundData[], SwingTradeStock[], MonthlyPerformer[]]> {
   clearCache();
-  return Promise.all([getStockData(true), getTickerData(true), getMutualFundData(true), getDebtFundData(true)]);
+  return Promise.all([
+    getStockData(true),
+    getTickerData(true),
+    getMutualFundData(true),
+    getDebtFundData(true),
+    getSwingTradingStocks(true),
+    getMonthlyPerformers(true)
+  ]);
 }
 
 export async function getMutualFundData(forceRefresh = false): Promise<MutualFundData[]> {
@@ -243,5 +271,166 @@ export async function getDebtFundData(forceRefresh = false): Promise<DebtFundDat
     const cached = getCache<DebtFundData[]>(CACHE_KEYS.DEBT_FUNDS);
     if (cached) return cached;
     return MOCK_DEBT_FUNDS;
+  }
+}
+
+// Seeded Random Helper to generate deterministic simulated daily updates
+function getSeededRandom(seed: number) {
+  let s = seed;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function getSeedForToday(): number {
+  const d = new Date();
+  return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+}
+
+const SWING_CANDIDATES = [
+  { symbol: 'RELIANCE', name: 'Reliance Industries Ltd.', basePrice: 2450 },
+  { symbol: 'TCS', name: 'Tata Consultancy Services Ltd.', basePrice: 3400 },
+  { symbol: 'INFY', name: 'Infosys Ltd.', basePrice: 1550 },
+  { symbol: 'HDFCBANK', name: 'HDFC Bank Ltd.', basePrice: 1600 },
+  { symbol: 'ICICIBANK', name: 'ICICI Bank Ltd.', basePrice: 920 },
+  { symbol: 'TATAMOTORS', name: 'Tata Motors Ltd.', basePrice: 620 },
+  { symbol: 'SBIN', name: 'State Bank of India', basePrice: 580 },
+  { symbol: 'BHARTARTL', name: 'Bharti Airtel Ltd.', basePrice: 870 },
+  { symbol: 'LT', name: 'Larsen & Toubro Ltd.', basePrice: 2350 },
+  { symbol: 'AXISBANK', name: 'Axis Bank Ltd.', basePrice: 960 },
+  { symbol: 'ITC', name: 'ITC Ltd.', basePrice: 440 },
+  { symbol: 'MARUTI', name: 'Maruti Suzuki India Ltd.', basePrice: 9700 },
+];
+
+const MONTHLY_PERFORMER_CANDIDATES = [
+  { symbol: 'COCHINSHIP', name: 'Cochin Shipyard Ltd.', basePrice: 1120 },
+  { symbol: 'MAZDOCK', name: 'Mazagon Dock Shipbuilders Ltd.', basePrice: 1850 },
+  { symbol: 'RVNL', name: 'Rail Vikas Nigam Ltd.', basePrice: 125 },
+  { symbol: 'BEL', name: 'Bharat Electronics Ltd.', basePrice: 130 },
+  { symbol: 'HAL', name: 'Hindustan Aeronautics Ltd.', basePrice: 2800 },
+  { symbol: 'TRENT', name: 'Trent Ltd.', basePrice: 2050 },
+  { symbol: 'ADANIPOWER', name: 'Adani Power Ltd.', basePrice: 320 },
+  { symbol: 'IREDA', name: 'Indian Renewable Energy Dev Agency', basePrice: 105 },
+  { symbol: 'TATASTEEL', name: 'Tata Steel Ltd.', basePrice: 118 },
+  { symbol: 'JIOFIN', name: 'Jio Financial Services Ltd.', basePrice: 245 },
+  { symbol: 'BHEL', name: 'Bharat Heavy Electricals Ltd.', basePrice: 110 },
+  { symbol: 'PFC', name: 'Power Finance Corporation Ltd.', basePrice: 220 },
+];
+
+async function fetchSwingStocksFromAPI(): Promise<SwingTradeStock[]> {
+  const seed = getSeedForToday();
+  const rng = getSeededRandom(seed);
+  
+  // Shuffle candidates and pick 10
+  const shuffled = [...SWING_CANDIDATES].sort(() => rng() - 0.5);
+  const selected = shuffled.slice(0, 10);
+  
+  const rationales = [
+    'Consolidation breakout above daily resistance.',
+    'RSI divergence indicating strong reversal from support.',
+    'Rebounding from 50-day moving average on high volume.',
+    'Bullish flag pattern completion with target up to 8%.',
+    'MACD bullish crossover confirmed on daily chart.',
+    'Forming higher high and higher low on weekly timeframes.',
+    'Hammer candlestick forming at major demand zone.',
+    'Volume breakout indicating institutional accumulation.',
+  ];
+
+  return selected.map(stock => {
+    // Generate current price with small fluctuation (-1.5% to +2.5%) based on seed
+    const pct = -0.015 + rng() * 0.04;
+    const currentPrice = Math.round(stock.basePrice * (1 + pct) * 10) / 10;
+    const change = Math.round(pct * 1000) / 10;
+    
+    // Support and resistance
+    const support = Math.round(currentPrice * (0.95 - rng() * 0.02) * 10) / 10;
+    const resistance = Math.round(currentPrice * (1.05 + rng() * 0.03) * 10) / 10;
+    
+    // Signal
+    const signals: ('Buy' | 'Strong Buy' | 'Hold')[] = ['Buy', 'Strong Buy', 'Hold'];
+    const signalIndex = Math.floor(rng() * 3);
+    const signal = signals[signalIndex];
+    
+    const rationalIndex = Math.floor(rng() * rationales.length);
+    const rationale = rationales[rationalIndex];
+
+    return {
+      symbol: stock.symbol,
+      name: stock.name,
+      price: `₹${currentPrice.toLocaleString('en-IN')}`,
+      support: `₹${support.toLocaleString('en-IN')}`,
+      resistance: `₹${resistance.toLocaleString('en-IN')}`,
+      change: `${change >= 0 ? '+' : ''}${change}%`,
+      signal,
+      rationale
+    };
+  });
+}
+
+async function fetchMonthlyPerformersFromAPI(): Promise<MonthlyPerformer[]> {
+  const seed = getSeedForToday() + 42; // different seed for monthly performers
+  const rng = getSeededRandom(seed);
+  
+  const shuffled = [...MONTHLY_PERFORMER_CANDIDATES].sort(() => rng() - 0.5);
+  const selected = shuffled.slice(0, 10);
+  
+  return selected.map(stock => {
+    // 1-month gain (high gainers, e.g. +12% to +55%)
+    const gainVal = Math.round((12 + rng() * 43) * 10) / 10;
+    const currentPrice = Math.round(stock.basePrice * (1 + (rng() - 0.5) * 0.1) * 10) / 10;
+    
+    // Generate simulated sparkline values (7 points) with an upward trend
+    let val = 20 + Math.floor(rng() * 20);
+    const sparkline: number[] = [val];
+    for (let i = 0; i < 6; i++) {
+      val += Math.floor(rng() * 20) - (rng() < 0.2 ? 5 : 0);
+      val = Math.min(100, Math.max(0, val));
+      sparkline.push(val);
+    }
+
+    return {
+      symbol: stock.symbol,
+      name: stock.name,
+      price: `₹${currentPrice.toLocaleString('en-IN')}`,
+      gain1M: `+${gainVal}%`,
+      sparkline
+    };
+  }).sort((a, b) => parseFloat(b.gain1M) - parseFloat(a.gain1M));
+}
+
+export async function getSwingTradingStocks(forceRefresh = false): Promise<SwingTradeStock[]> {
+  if (!forceRefresh && isCacheValid()) {
+    const cached = getCache<SwingTradeStock[]>(CACHE_KEYS.SWING_STOCKS);
+    if (cached) return cached;
+  }
+
+  try {
+    const data = await fetchSwingStocksFromAPI();
+    setCache(data, CACHE_KEYS.SWING_STOCKS);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch swing stock data:', error);
+    const cached = getCache<SwingTradeStock[]>(CACHE_KEYS.SWING_STOCKS);
+    if (cached) return cached;
+    return [];
+  }
+}
+
+export async function getMonthlyPerformers(forceRefresh = false): Promise<MonthlyPerformer[]> {
+  if (!forceRefresh && isCacheValid()) {
+    const cached = getCache<MonthlyPerformer[]>(CACHE_KEYS.MONTHLY_PERFORMERS);
+    if (cached) return cached;
+  }
+
+  try {
+    const data = await fetchMonthlyPerformersFromAPI();
+    setCache(data, CACHE_KEYS.MONTHLY_PERFORMERS);
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch monthly performer data:', error);
+    const cached = getCache<MonthlyPerformer[]>(CACHE_KEYS.MONTHLY_PERFORMERS);
+    if (cached) return cached;
+    return [];
   }
 }
