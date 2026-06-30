@@ -1,65 +1,89 @@
-import { useState, useEffect } from 'react';
-import { getDebtFundData, getLastUpdateTime, forceRefreshAll } from '../services/marketData';
-import type { DebtFundData } from '../services/marketData';
+import { useState, useCallback } from 'react';
+import PageHeader from '../components/PageHeader';
+import { getDebtFundData, type DebtFundData } from '../services/marketData';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 export default function DebtFunds() {
   const [funds, setFunds] = useState<DebtFundData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    loadFundData();
+  const loadData = useCallback(async () => {
+    setFunds(await getDebtFundData());
   }, []);
 
-  const loadFundData = async () => {
-    setLoading(true);
-    const data = await getDebtFundData();
-    setFunds(data);
-    setLastUpdate(getLastUpdateTime());
-    setLoading(false);
-  };
+  const { loading, refreshing, lastUpdate, handleForceRefresh } = useAutoRefresh(loadData);
 
-  const handleRefresh = async () => {
-    await forceRefreshAll();
-    loadFundData();
-  };
+  const filtered = funds.filter(
+    (f) =>
+      f.name.toLowerCase().includes(search.toLowerCase()) ||
+      f.type.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const avgYield =
+    funds.length > 0 ? funds.reduce((s, f) => s + f.yieldNum, 0) / funds.length : 0;
 
   return (
     <section className="fade-up">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <h1>Fixed Income & Debt Funds</h1>
-          <p className="section-desc" style={{ marginBottom: 0 }}>
-            Analyze fixed-income investments, AAA corporate bonds, and PSU debt funds with average yield metrics.
-          </p>
-        </div>
-        <button 
-          onClick={handleRefresh}
-          className="btn btn-primary"
-        >
-          🔄 Refresh Data
-        </button>
-      </div>
+      <PageHeader
+        title="Fixed Income & Debt Funds"
+        description="Yield metrics updated dynamically to reflect current rate environment."
+        lastUpdate={lastUpdate}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleForceRefresh}
+      />
 
-      {lastUpdate && (
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-          Last data update: {lastUpdate.toLocaleString()}
-        </p>
+      {!loading && funds.length > 0 && (
+        <div className="stat-grid stat-grid-compact">
+          <div className="stat-card">
+            <span className="stat-label">Funds</span>
+            <span className="stat-value">{funds.length}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Avg Yield</span>
+            <span className="stat-value trend-positive">{avgYield.toFixed(1)}%</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Highest Yield</span>
+            <span className="stat-value trend-positive">
+              {Math.max(...funds.map((f) => f.yieldNum)).toFixed(1)}%
+            </span>
+          </div>
+        </div>
       )}
 
+      <div className="card-controls" style={{ margin: '24px 0' }}>
+        <input
+          type="text"
+          placeholder="Search fund or type…"
+          className="search-input"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: '320px' }}
+        />
+      </div>
+
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading debt fund holdings...</div>
+        <div className="page-loading">Loading debt fund data…</div>
       ) : (
-        <ul className="fund-list">
-          {funds.map((fund) => (
+        <ul className="fund-list fund-list-enhanced">
+          {filtered.map((fund) => (
             <li key={fund.name}>
-              <strong>{fund.name}</strong>
-              <span>
+              <div className="fund-list-top">
+                <strong>{fund.name}</strong>
                 <span className="badge" style={{ backgroundColor: 'var(--warning-light)', color: 'var(--warning-dark)', textTransform: 'none' }}>
                   {fund.type}
                 </span>
-                <strong className="trend-positive">{fund.yield} Yield</strong>
-              </span>
+              </div>
+              <div className="fund-list-metrics">
+                <div>
+                  <span className="fund-metric-label">Current Yield</span>
+                  <span className="fund-metric-value trend-positive">{fund.yield}</span>
+                </div>
+              </div>
+              <div className="fund-progress-bar fund-progress-bar-amber">
+                <div className="fund-progress-fill" style={{ width: `${(fund.yieldNum / 8) * 100}%` }} />
+              </div>
             </li>
           ))}
         </ul>
@@ -67,4 +91,3 @@ export default function DebtFunds() {
     </section>
   );
 }
-

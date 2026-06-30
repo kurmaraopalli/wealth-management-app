@@ -1,84 +1,103 @@
-import { useState } from 'react';
-
-const indexes = [
-  { name: 'S&P 500', region: 'United States', flag: '🇺🇸' },
-  { name: 'NASDAQ Composite', region: 'United States', flag: '🇺🇸' },
-  { name: 'Dow Jones Industrial Average', region: 'United States', flag: '🇺🇸' },
-  { name: 'FTSE 100', region: 'United Kingdom', flag: '🇬🇧' },
-  { name: 'DAX', region: 'Germany', flag: '🇩🇪' },
-  { name: 'CAC 40', region: 'France', flag: '🇫🇷' },
-  { name: 'Nikkei 225', region: 'Japan', flag: '🇯🇵' },
-  { name: 'Hang Seng', region: 'Hong Kong', flag: '🇭🇰' },
-  { name: 'Shanghai Composite', region: 'China', flag: '🇨🇳' },
-  { name: 'BSE Sensex', region: 'India', flag: '🇮🇳' },
-  { name: 'Nifty 50', region: 'India', flag: '🇮🇳' },
-  { name: 'ASX 200', region: 'Australia', flag: '🇦🇺' },
-  { name: 'TSX Composite', region: 'Canada', flag: '🇨🇦' },
-  { name: 'Euro Stoxx 50', region: 'Eurozone', flag: '🇪🇺' },
-  { name: 'MSCI World', region: 'Global', flag: '🌐' },
-];
+import { useState, useCallback } from 'react';
+import PageHeader from '../components/PageHeader';
+import { getGlobalIndexesData, type GlobalIndexData } from '../services/marketData';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 export default function GlobalIndexes() {
+  const [indexes, setIndexes] = useState<GlobalIndexData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredIndexes = indexes.filter(idx => 
-    idx.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    idx.region.toLowerCase().includes(searchQuery.toLowerCase())
+  const loadData = useCallback(async () => {
+    setIndexes(await getGlobalIndexesData());
+  }, []);
+
+  const { loading, refreshing, lastUpdate, handleForceRefresh } = useAutoRefresh(loadData);
+
+  const filtered = indexes.filter(
+    (idx) =>
+      idx.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      idx.region.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const gainers = indexes.filter((i) => i.isPositive).length;
+  const losers = indexes.length - gainers;
 
   return (
     <section className="fade-up">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <h1>Global Stock Indexes</h1>
-          <p className="section-desc" style={{ marginBottom: 0 }}>
-            Explore benchmarks, equity tickers, and index definitions across global financial regions.
-          </p>
-        </div>
-        <div className="control-group">
-          <input 
-            type="text" 
-            placeholder="Search index or region..." 
-            className="search-input"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ minWidth: '240px' }}
-          />
-        </div>
-      </div>
+      <PageHeader
+        title="Global Stock Indexes"
+        description="Live index values and daily changes across major world markets."
+        lastUpdate={lastUpdate}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleForceRefresh}
+      >
+        <input
+          type="text"
+          placeholder="Search index or region…"
+          className="search-input"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ minWidth: '220px' }}
+        />
+      </PageHeader>
 
-      <div className="table-responsive">
-        <table className="modern-table">
-          <thead>
-            <tr>
-              <th>Index Benchmark</th>
-              <th>Geographical Region</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredIndexes.length === 0 ? (
+      {!loading && indexes.length > 0 && (
+        <div className="stat-grid stat-grid-compact">
+          <div className="stat-card">
+            <span className="stat-label">Indexes Tracked</span>
+            <span className="stat-value">{indexes.length}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Gainers</span>
+            <span className="stat-value trend-positive">{gainers}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Decliners</span>
+            <span className="stat-value trend-negative">{losers}</span>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="page-loading">Fetching live global index data…</div>
+      ) : (
+        <div className="table-responsive" style={{ marginTop: '24px' }}>
+          <table className="modern-table">
+            <thead>
               <tr>
-                <td colSpan={2} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>
-                  No global indexes match your search query.
-                </td>
+                <th>Index</th>
+                <th>Region</th>
+                <th>Value</th>
+                <th>Day Change</th>
               </tr>
-            ) : (
-              filteredIndexes.map((index) => (
-                <tr key={index.name}>
-                  <td><strong>{index.name}</strong></td>
-                  <td>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.1rem' }}>{index.flag}</span>
-                      <span>{index.region}</span>
-                    </span>
-                  </td>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="table-empty">No indexes match your search.</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                filtered.map((index) => (
+                  <tr key={index.name}>
+                    <td><strong>{index.name}</strong></td>
+                    <td>
+                      <span className="region-cell">
+                        <span>{index.flag}</span>
+                        {index.region}
+                      </span>
+                    </td>
+                    <td className="index-value">{index.value}</td>
+                    <td className={index.isPositive ? 'trend-positive' : 'trend-negative'}>
+                      {index.change}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 }
-

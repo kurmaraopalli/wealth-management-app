@@ -1,65 +1,93 @@
-import { useState, useEffect } from 'react';
-import { getMutualFundData, getLastUpdateTime, forceRefreshAll } from '../services/marketData';
-import type { MutualFundData } from '../services/marketData';
+import { useState, useCallback } from 'react';
+import PageHeader from '../components/PageHeader';
+import { getMutualFundData, type MutualFundData } from '../services/marketData';
+import { useAutoRefresh } from '../hooks/useAutoRefresh';
 
 export default function MutualFunds() {
   const [funds, setFunds] = useState<MutualFundData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [search, setSearch] = useState('');
 
-  useEffect(() => {
-    loadFundData();
+  const loadData = useCallback(async () => {
+    setFunds(await getMutualFundData());
   }, []);
 
-  const loadFundData = async () => {
-    setLoading(true);
-    const data = await getMutualFundData();
-    setFunds(data);
-    setLastUpdate(getLastUpdateTime());
-    setLoading(false);
-  };
+  const { loading, refreshing, lastUpdate, handleForceRefresh } = useAutoRefresh(loadData);
 
-  const handleRefresh = async () => {
-    await forceRefreshAll();
-    loadFundData();
-  };
+  const filtered = funds.filter(
+    (f) =>
+      f.name.toLowerCase().includes(search.toLowerCase()) ||
+      f.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const avgYtd =
+    funds.length > 0 ? funds.reduce((s, f) => s + f.ytdNum, 0) / funds.length : 0;
 
   return (
     <section className="fade-up">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
-        <div>
-          <h1>Mutual Funds</h1>
-          <p className="section-desc" style={{ marginBottom: 0 }}>
-            Monitor equity, hybrid, and small-cap mutual fund schemes, allocations, and year-to-date returns.
-          </p>
-        </div>
-        <button 
-          onClick={handleRefresh}
-          className="btn btn-primary"
-        >
-          🔄 Refresh Data
-        </button>
-      </div>
+      <PageHeader
+        title="Mutual Funds"
+        description="Dynamic NAV and YTD returns — refreshed with live market conditions."
+        lastUpdate={lastUpdate}
+        loading={loading}
+        refreshing={refreshing}
+        onRefresh={handleForceRefresh}
+      />
 
-      {lastUpdate && (
-        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-          Last data update: {lastUpdate.toLocaleString()}
-        </p>
+      {!loading && funds.length > 0 && (
+        <div className="stat-grid stat-grid-compact">
+          <div className="stat-card">
+            <span className="stat-label">Schemes</span>
+            <span className="stat-value">{funds.length}</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Avg YTD Return</span>
+            <span className="stat-value trend-positive">{avgYtd.toFixed(1)}%</span>
+          </div>
+          <div className="stat-card">
+            <span className="stat-label">Best Performer</span>
+            <span className="stat-value trend-positive">
+              {funds.reduce((best, f) => (f.ytdNum > best.ytdNum ? f : best)).name.split(' ')[0]}
+            </span>
+          </div>
+        </div>
       )}
 
+      <div className="card-controls" style={{ margin: '24px 0' }}>
+        <input
+          type="text"
+          placeholder="Search fund or category…"
+          className="search-input"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ maxWidth: '320px' }}
+        />
+      </div>
+
       {loading ? (
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading mutual fund holdings...</div>
+        <div className="page-loading">Loading mutual fund data…</div>
       ) : (
-        <ul className="fund-list">
-          {funds.map((fund) => (
+        <ul className="fund-list fund-list-enhanced">
+          {filtered.map((fund) => (
             <li key={fund.name}>
-              <strong>{fund.name}</strong>
-              <span>
+              <div className="fund-list-top">
+                <strong>{fund.name}</strong>
                 <span className="badge" style={{ backgroundColor: 'var(--primary-light)', color: 'var(--primary)', textTransform: 'none' }}>
                   {fund.category}
                 </span>
-                <strong className="trend-positive">{fund.ytd} YTD</strong>
-              </span>
+              </div>
+              <div className="fund-list-metrics">
+                <div>
+                  <span className="fund-metric-label">NAV</span>
+                  <span className="fund-metric-value">{fund.nav}</span>
+                </div>
+                <div>
+                  <span className="fund-metric-label">YTD</span>
+                  <span className="fund-metric-value trend-positive">{fund.ytd}</span>
+                </div>
+              </div>
+              <div className="fund-progress-bar">
+                <div className="fund-progress-fill" style={{ width: `${Math.min(fund.ytdNum * 4, 100)}%` }} />
+              </div>
             </li>
           ))}
         </ul>
@@ -67,4 +95,3 @@ export default function MutualFunds() {
     </section>
   );
 }
-
