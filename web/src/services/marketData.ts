@@ -709,8 +709,8 @@ async function fetchSwingStocksFromAPI(): Promise<SwingTradeStock[]> {
         const mock = generateMockHistory(stock.basePrice, getSeededRandom(mockSeed));
         priceVal = mock.currentPrice;
         changeNum = mock.changePercent;
-        supportVal = mock.support;
-        resistanceVal = mock.resistance;
+        supportVal = mock.minPrice;
+        resistanceVal = mock.maxPrice;
         rsiVal = mock.rsi;
       }
 
