@@ -103,17 +103,17 @@ const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
 const USD_TO_INR = 84;
 
 const CACHE_KEYS = {
-  STOCKS: 'wealth_stocks_cache',
-  TICKERS: 'wealth_tickers_cache',
-  MUTUAL_FUNDS: 'wealth_mutual_funds_cache',
-  DEBT_FUNDS: 'wealth_debt_funds_cache',
-  SWING_STOCKS: 'wealth_swing_stocks_cache',
-  MONTHLY_PERFORMERS: 'wealth_monthly_performers_cache',
-  GLOBAL_INDEXES: 'wealth_global_indexes_cache',
-  FOREIGN_EQUITIES: 'wealth_foreign_equities_cache',
-  FOREIGN_DEBT: 'wealth_foreign_debt_cache',
-  PORTFOLIO: 'wealth_portfolio_cache',
-  LAST_UPDATE: 'wealth_last_update',
+  STOCKS: 'wealth_stocks_cache_v2',
+  TICKERS: 'wealth_tickers_cache_v2',
+  MUTUAL_FUNDS: 'wealth_mutual_funds_cache_v2',
+  DEBT_FUNDS: 'wealth_debt_funds_cache_v2',
+  SWING_STOCKS: 'wealth_swing_stocks_cache_v2',
+  MONTHLY_PERFORMERS: 'wealth_monthly_performers_cache_v2',
+  GLOBAL_INDEXES: 'wealth_global_indexes_cache_v2',
+  FOREIGN_EQUITIES: 'wealth_foreign_equities_cache_v2',
+  FOREIGN_DEBT: 'wealth_foreign_debt_cache_v2',
+  PORTFOLIO: 'wealth_portfolio_cache_v2',
+  LAST_UPDATE: 'wealth_last_update_v2',
 };
 
 // ─── Seeded random (changes every 15 min for live feel) ─────────────────────
